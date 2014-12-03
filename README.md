@@ -1,6 +1,8 @@
 # Ledger
 
-TODO: Write a gem description
+Ledger is a accounting helper module that calculates the set of payments required to resolve open accounts.
+ 
+
 
 ## Installation
 
@@ -18,7 +20,29 @@ Or install it yourself as:
 
 ## Usage
 
-TODO: Write usage instructions here
+To use ledger, just require it in your project:
+
+	require 'ledger'
+
+Now create a ledger, and then add some transactions: 
+
+	accounts = Ledger.new
+
+	lunch = Transaction.new('Bob', 'Sue', 50)
+	accounts.reconcile!(lunch)
+
+	dinner = Transaction.new('Sue', 'Jane', 35)
+	accounts.reconcile!(dinner)
+	
+	breakfast = Transaction.new('Jane', Bob, 20)
+	accounts.reconcile!(breakfast)
+
+You can keep adding transactions as they happen. When you're ready to settle accounts, just call: 
+
+	payments = accounts.settle!
+
+This will return a list of transactions to settle everyones open debts. 
+
 
 ## Contributing
 

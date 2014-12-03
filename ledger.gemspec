@@ -8,10 +8,11 @@ Gem::Specification.new do |spec|
   spec.version       = Ledger::VERSION
   spec.authors       = ["Varun Srinivasan"]
   spec.email         = ["varunsrin@gmail.com"]
-  spec.description   = %q{TODO: Write a gem description}
-  spec.summary       = %q{TODO: Write a gem summary}
-  spec.homepage      = ""
+  spec.summary       = %q{Accounting module to settle account balances}
+  spec.homepage      = "https://github.com/varunsrin/ledger"
   spec.license       = "MIT"
+
+  s.required_ruby_version = ">= 1.9.2"
 
   spec.files         = `git ls-files`.split($/)
   spec.executables   = spec.files.grep(%r{^bin/}) { |f| File.basename(f) }
