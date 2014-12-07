@@ -3,11 +3,12 @@ require "transaction"
 
 class Ledger
 
-  attr_reader :accounts
+  attr_reader :accounts, :payments
 
   # Initalize a ledger from a set of transactions
   def initialize(transactions=[])
     @accounts = {}
+    @payments = []
     transactions.each do |t|
       reconcile!(t)
     end
@@ -29,38 +30,36 @@ class Ledger
 
   # Returns list of transactions that will settle open accounts
   def settle!
-    payments = []
-    while !empty?
-      p = settle_helper
-      payments << p
-      reconcile!(p)
-    end
-    payments
-  end
-
-  def settle_helper
-    debtors.each do |d|
-      creditors.each do |c|
-        return Transaction.new(c[0], d[0], c[1])
-      end
+    while !empty?      
+      transact(even_account) while even_account
+      transact(any_account) while any_account
     end
   end
 
-  private
-
-
-  def cancellable_accounts
-    transactions = []
+  def even_account
     debtors.each do |d| 
       creditors.each do |c|
-        if d[1] == c[1]
-          transactions << Transaction.new(c[0], d[0], c[1])
-        end 
+        return Transaction.new(c[0], d[0], c[1]) if c[1] == -d[1]
       end
     end
-    return transactions
+    return false
   end
 
+  def any_account
+    debtors.each do |d|
+      creditors.each do |c|
+        amount = c[1] > -d[1] ? -d[1] : c[1]  
+        return Transaction.new(c[0], d[0], amount)
+      end
+    end
+    return false
+  end
+
+  def transact(t)
+    reconcile!(t)
+    t.invert!
+    @payments << t
+  end
 
   # Returns all debtors
   def debtors
@@ -72,42 +71,10 @@ class Ledger
     @accounts.select {|_, amt| amt > 0}
   end
 
-  # Returns all possible transactions that eliminate a debtor or creditor
-  def transactions
-    debtors.each do |d|
-      creditors.each do |c|
-        if c.amount < (-d.amount)
-          yield Transaction.new(d, c, c.amount)
-        elsif c.amount > (-d.amount) 
-          yield Transaction.new(d, c, -d.amount)
-        end
-      end
-    end
-  end
-
   # Updates the account, or creates it if it does not exist
   def update_or_create_account!(name, amount)
     account = name.to_sym
     @accounts[account] = @accounts[account].to_i + amount
-  end
-
-  # Reconciles opposing payments and removes them from the ledger, (true/false)
-  def clear_even_debts!
-    debtors.each do |d|
-      creditors.each do |c|
-        if c[1] == -d[1]
-          reconcile!(Transaction.new(c[0], d[0], c[1])) 
-        end
-      end
-    end
-  end
-
-  # If transaction will result in a settle_even_debt success, perform the transaction and remove even debts (true/false)
-  def lookahead_and_settle_even_debts!(transaction)
-    reconcile!(transaction)
-    settled = settle_even_debts!
-    reconcile!(transaction.invert!) if !settled
-    return settled
   end
 
 end
