@@ -7,7 +7,6 @@ class Ledger
 
   def initialize
     @accounts = {}
-    @payments = []
   end
 
   # Checks if any accounts in ledger with a balance over the threshold
@@ -18,20 +17,43 @@ class Ledger
     return true
   end
 
+  # Returns all debtors
+  def debtors
+    @accounts.select {|_, amt| amt < 0}
+  end
+
+  # Returns all creditors
+  def creditors
+    @accounts.select {|_, amt| amt > 0}
+  end
+
   # Reconciles the ledgers accounts with the transaction
-  def reconcile!(transaction)
-    update_or_create_account!(transaction.creditor, transaction.amount)
-    update_or_create_account!(transaction.debtor, -transaction.amount)
+  def reconcile(t)
+    update_or_create_account(t.creditor, t.amount)
+    update_or_create_account(t.debtor, -t.amount)
   end
 
   # Returns list of transactions that will settle open accounts
+  def settle
+    s = Marshal.load(Marshal.dump(self))
+    s.settle!
+  end
+
   def settle!
-    until empty?      
-      transact(even_account) while even_account
-      if even_after_one_account
-        transact(even_after_one_account) 
-      else 
-        transact(any_account) if any_account
+    payments = []
+    next_payment do |n|
+      reconcile(n)
+      payments << n.reverse
+    end
+    payments
+  end
+
+  protected
+
+  def single_cancel_payments
+    debtors.each do |d|
+      creditors.each do |c|
+        yield Transaction.new(c[0], d[0], [c[1], -d[1]].min)
       end
     end
   end
@@ -45,51 +67,35 @@ class Ledger
     return false
   end
 
-  def even_after_one_account
-    lk = Marshal.load(Marshal.dump(self)) # deep copy 
-    lk.debtors.each do |d|
-      lk.creditors.each do |c|
-        amount = c[1] > -d[1] ? -d[1] : c[1]  
-        t = Transaction.new(c[0], d[0], amount) 
-
-        lk.reconcile!(t)
-        return t if lk.even_account
-        lk.reconcile!(t.reverse)
-      end
-    end
-    return false
-  end
+  private
 
   def any_account
-    debtors.each do |d|
-      creditors.each do |c|
-        amount = c[1] > -d[1] ? -d[1] : c[1]  
-        return Transaction.new(c[0], d[0], amount)
-      end
-    end
-    return false
-  end
-
-  def transact(t)
-    reconcile!(t)
-    @payments << t.reverse
-  end
-
-  # Returns all debtors
-  def debtors
-    @accounts.select {|_, amt| amt < 0}
-  end
-
-  # Returns all creditors
-  def creditors
-    @accounts.select {|_, amt| amt > 0}
+    single_cancel_payments { |n| return n }
   end
 
   # Updates the account, or creates it if it does not exist
-  def update_or_create_account!(name, amount)
+  def update_or_create_account(name, amount)
     account = name.to_sym
     @accounts[account] = @accounts[account].to_i + amount
   end
 
-end
+  def next_payment
+    until empty?      
+      if even_account
+        yield even_account
+        next
+      end
+      yield even_after_one_account ? even_after_one_account : any_account
+    end
+  end
 
+  def even_after_one_account
+    s = Marshal.load(Marshal.dump(self))
+    s.single_cancel_payments do |p|
+      s.reconcile(p)
+      s.even_account ? (return p) : s.reconcile(p.reverse)     
+    end
+    return false
+  end
+
+end
