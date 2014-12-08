@@ -5,13 +5,9 @@ class Ledger
 
   attr_reader :accounts, :payments
 
-  # Initalize a ledger from a set of transactions
-  def initialize(transactions=[])
+  def initialize
     @accounts = {}
     @payments = []
-    transactions.each do |t|
-      reconcile!(t)
-    end
   end
 
   # Checks if any accounts in ledger with a balance over the threshold
@@ -30,9 +26,13 @@ class Ledger
 
   # Returns list of transactions that will settle open accounts
   def settle!
-    while !empty?      
+    until empty?      
       transact(even_account) while even_account
-      transact(any_account) while any_account
+      if even_after_one_account
+        transact(even_after_one_account) 
+      else 
+        transact(any_account) if any_account
+      end
     end
   end
 
@@ -40,6 +40,21 @@ class Ledger
     debtors.each do |d| 
       creditors.each do |c|
         return Transaction.new(c[0], d[0], c[1]) if c[1] == -d[1]
+      end
+    end
+    return false
+  end
+
+  def even_after_one_account
+    lk = Marshal.load(Marshal.dump(self)) # deep copy 
+    lk.debtors.each do |d|
+      lk.creditors.each do |c|
+        amount = c[1] > -d[1] ? -d[1] : c[1]  
+        t = Transaction.new(c[0], d[0], amount) 
+
+        lk.reconcile!(t)
+        return t if lk.even_account
+        lk.reconcile!(t.reverse)
       end
     end
     return false
@@ -57,8 +72,7 @@ class Ledger
 
   def transact(t)
     reconcile!(t)
-    t.invert!
-    @payments << t
+    @payments << t.reverse
   end
 
   # Returns all debtors
