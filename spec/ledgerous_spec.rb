@@ -1,7 +1,7 @@
 require 'spec_helper'
 
-describe Ledger do
-  subject { Ledger.new }
+describe Ledgerous do
+  subject { Ledgerous.new }
 
   describe '#empty?' do
 

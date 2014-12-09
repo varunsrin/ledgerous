@@ -1,7 +1,7 @@
-require "ledger/version"
+require "ledgerous/version"
 require "transaction"
 
-class Ledger
+class Ledgerous
 
   attr_reader :accounts, :payments
 
@@ -30,7 +30,7 @@ class Ledger
     @accounts.select {|_, amt| amt > 0}
   end
 
-  # Reconciles the ledger with the transaction
+  # Reconciles the ledgerous with the transaction
   def reconcile(t)
     update_or_create_account(t.creditor, t.amount)
     update_or_create_account(t.debtor, -t.amount)

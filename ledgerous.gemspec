@@ -1,15 +1,15 @@
 # coding: utf-8
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'ledger/version'
+require 'ledgerous/version'
 
 Gem::Specification.new do |s|
-  s.name          = "ledger"
-  s.version       = Ledger::VERSION
+  s.name          = "ledgerous"
+  s.version       = Ledgerous::VERSION
   s.authors       = ["Varun Srinivasan"]
   s.email         = ["varunsrin@gmail.com"]
   s.summary       = %q{Accounting module to settle account balances}
-  s.homepage      = "https://github.com/varunsrin/ledger"
+  s.homepage      = "https://github.com/varunsrin/ledgerous"
   s.license       = "MIT"
 
   s.required_ruby_version = ">= 1.9.2"

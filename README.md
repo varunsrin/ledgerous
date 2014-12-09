@@ -1,6 +1,6 @@
-# Ledger
+# Ledgerous
 
-Ledger is an accounting helper that calculates the smallest set of
+Ledgerous is an accounting helper that calculates the smallest set of
 payments that will settle open accounts. 
  
 
@@ -8,7 +8,7 @@ payments that will settle open accounts.
 
 Add this line to your application's Gemfile:
 
-    gem 'ledger'
+    gem 'ledgerous'
 
 And then execute:
 
@@ -16,13 +16,13 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install ledger
+    $ gem install ledgerous
 
 ## Usage
 
-To use ledger, just require it in your project:
+To use ledgerous, just require it in your project:
 
-	require 'ledger'
+	require 'ledgerous'
 
 Let's say that Jane paid for Bob's breakfast, Bob paid for Sue's lunch and Sue
 paid for Jane's dinner. You'd set the transactions up as follows: 
@@ -34,7 +34,7 @@ paid for Jane's dinner. You'd set the transactions up as follows:
 
 Next, create a new ledger, and add each transaction into the ledger: 
 
-	accounts = Ledger.new
+	accounts = Ledgerous.new
 	transactions.each { |t| accounts.reconcile(t) }
 
 You can also set a minimum threshold for debts. Any debts equal to or lower 
