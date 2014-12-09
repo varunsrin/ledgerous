@@ -6,10 +6,10 @@ class Ledger
   attr_reader :accounts, :payments
 
   def initialize
-    @accounts = {}
+    @accounts = Hash.new(0)
   end
 
-  # Checks if any accounts in ledger with a balance over the threshold
+  # Returns true if there are no open accounts above or below the threshold
   def empty?(threshold=0)
     @accounts.each do |k, v| 
       return false if v.abs > threshold
@@ -17,17 +17,17 @@ class Ledger
     return true
   end
 
-  # Returns all debtors
+  # Returns all accounts with negative balances
   def debtors
     @accounts.select {|_, amt| amt < 0}
   end
 
-  # Returns all creditors
+  # Returns all accounts wiht positive balances
   def creditors
     @accounts.select {|_, amt| amt > 0}
   end
 
-  # Reconciles the ledgers accounts with the transaction
+  # Reconciles the ledger with the transaction
   def reconcile(t)
     update_or_create_account(t.creditor, t.amount)
     update_or_create_account(t.debtor, -t.amount)
@@ -39,6 +39,8 @@ class Ledger
     s.settle!
   end
 
+  # Returns a list of transactions that will settle open accounts, and applies
+  # them to clear accounts
   def settle!
     payments = []
     next_payment do |n|
@@ -50,15 +52,8 @@ class Ledger
 
   protected
 
-  def single_cancel_payments
-    debtors.each do |d|
-      creditors.each do |c|
-        yield Transaction.new(c[0], d[0], [c[1], -d[1]].min)
-      end
-    end
-  end
-
-  def even_account
+  # Returns the first payment that can clear two accounts
+  def double_clear_payment
     debtors.each do |d| 
       creditors.each do |c|
         return Transaction.new(c[0], d[0], c[1]) if c[1] == -d[1]
@@ -67,35 +62,52 @@ class Ledger
     return false
   end
 
-  private
-
-  def any_account
-    single_cancel_payments { |n| return n }
+  # Returns the first payment that clears one account, but will result in two 
+  # accounts being cleared next
+  def double_clear_lookahead
+    s = Marshal.load(Marshal.dump(self))
+    s.single_clears do |p|
+      s.reconcile(p)
+      s.double_clear_payment ? (return p) : s.reconcile(p.reverse)     
+    end
+    return false
   end
+
+  # Yields payments that will clear one account
+  def single_clears
+    debtors.each do |d|
+      creditors.each do |c|
+        yield Transaction.new(c[0], d[0], [c[1], -d[1]].min)
+      end
+    end
+  end
+
+  # Returns the first payment that will clear one account
+  def single_clear
+    single_clears { |n| return n }
+  end
+
+  private
 
   # Updates the account, or creates it if it does not exist
   def update_or_create_account(name, amount)
-    account = name.to_sym
-    @accounts[account] = @accounts[account].to_i + amount
+    @accounts[name.to_sym] += amount
   end
 
+  # Finds the next best payment to settle the account
+  #
+  # * Cancel a payment that removes two accounts
+  # * Cancel a payment that removes one account, but will result in two being
+  #   removed on the next payment
+  # * Cancel a payment that removes any account
   def next_payment
     until empty?      
-      if even_account
-        yield even_account
+      if double_clear_payment
+        yield double_clear_payment
         next
       end
-      yield even_after_one_account ? even_after_one_account : any_account
+      yield double_clear_lookahead ? double_clear_lookahead : single_clear
     end
-  end
-
-  def even_after_one_account
-    s = Marshal.load(Marshal.dump(self))
-    s.single_cancel_payments do |p|
-      s.reconcile(p)
-      s.even_account ? (return p) : s.reconcile(p.reverse)     
-    end
-    return false
   end
 
 end
