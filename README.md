@@ -1,14 +1,14 @@
-# Ledger
+# Ledgerous
 
-Ledger is a accounting helper module that calculates the set of payments required to resolve open accounts.
+Ledgerous is an accounting helper that calculates the smallest set of
+payments that will settle open accounts. 
  
-
 
 ## Installation
 
 Add this line to your application's Gemfile:
 
-    gem 'ledger'
+    gem 'ledgerous'
 
 And then execute:
 
@@ -16,32 +16,36 @@ And then execute:
 
 Or install it yourself as:
 
-    $ gem install ledger
+    $ gem install ledgerous
 
 ## Usage
 
-To use ledger, just require it in your project:
+To use ledgerous, just require it in your project:
 
-	require 'ledger'
+	require 'ledgerous'
 
-Now create a ledger, and then add some transactions: 
+Let's say that Jane paid for Bob's breakfast, Bob paid for Sue's lunch and Sue
+paid for Jane's dinner. You'd set the transactions up as follows: 
 
-	accounts = Ledger.new
+	transactions = []
+	transactions << Transaction.new('Jane', Bob, 20)   # breakfast
+	transactions << Transaction.new('Bob', 'Sue', 50)  # lunch
+	transactions << Transaction.new('Sue', 'Jane', 35) # dinner
 
-	lunch = Transaction.new('Bob', 'Sue', 50)
-	accounts.reconcile!(lunch)
+Next, create a new ledger, and add each transaction into the ledger: 
 
-	dinner = Transaction.new('Sue', 'Jane', 35)
-	accounts.reconcile!(dinner)
-	
-	breakfast = Transaction.new('Jane', Bob, 20)
-	accounts.reconcile!(breakfast)
+	accounts = Ledgerous.new
+	transactions.each { |t| accounts.reconcile(t) }
+
+You can also set a minimum threshold for debts. Any debts equal to or lower 
+than this amount will be discarded:
+
+	accounts.threshold = 2
 
 You can keep adding transactions as they happen. When you're ready to settle accounts, just call: 
 
-	payments = accounts.settle!
+	puts accounts.settle
 
-This will return a list of transactions to settle everyones open debts. 
 
 
 ## Contributing

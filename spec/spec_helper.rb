@@ -1,1 +1,1 @@
-require 'ledger'
+require 'ledgerous'

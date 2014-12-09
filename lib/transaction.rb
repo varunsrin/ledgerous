@@ -11,13 +11,17 @@ class Transaction
     @amount = amount
   end
 
-  # Reverses the debtor and creditor
-  def invert!
-    @debtor, @creditor = @creditor, @debtor
+  # Returns a transaction that is the reverse of the current one
+  def reverse
+    Transaction.new(@creditor, @debtor, @amount)
   end
 
-  def to_s
-    return @debtor + " pays " + " $" + @amount + " to " + @creditor
+  def ==(obj)
+    (
+      obj.amount == self.amount && 
+      obj.creditor == self.creditor && 
+      obj.debtor == self.debtor
+    )
   end
 
 end
