@@ -16,7 +16,8 @@ describe Ledger do
 
     it 'returns true if no accounts are greater than the threshold' do
       subject.reconcile(Transaction.new('A', 'B', 5))
-      expect(subject.empty?(5)).to eq(true)
+      subject.threshold = 5
+      expect(subject.empty?).to eq(true)
     end
 
   end

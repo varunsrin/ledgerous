@@ -1,8 +1,8 @@
 # Ledger
 
-Ledger is a accounting helper module that calculates the set of payments required to resolve open accounts.
+Ledger is an accounting helper that calculates the smallest set of
+payments that will settle open accounts. 
  
-
 
 ## Installation
 
@@ -24,24 +24,28 @@ To use ledger, just require it in your project:
 
 	require 'ledger'
 
-Now create a ledger, and then add some transactions: 
+Let's say that Jane paid for Bob's breakfast, Bob paid for Sue's lunch and Sue
+paid for Jane's dinner. You'd set the transactions up as follows: 
+
+	transactions = []
+	transactions << Transaction.new('Jane', Bob, 20)   # breakfast
+	transactions << Transaction.new('Bob', 'Sue', 50)  # lunch
+	transactions << Transaction.new('Sue', 'Jane', 35) # dinner
+
+Next, create a new ledger, and add each transaction into the ledger: 
 
 	accounts = Ledger.new
+	transactions.each { |t| accounts.reconcile(t) }
 
-	lunch = Transaction.new('Bob', 'Sue', 50)
-	accounts.reconcile!(lunch)
+You can also set a minimum threshold for debts. Any debts equal to or lower 
+than this amount will be discarded:
 
-	dinner = Transaction.new('Sue', 'Jane', 35)
-	accounts.reconcile!(dinner)
-	
-	breakfast = Transaction.new('Jane', Bob, 20)
-	accounts.reconcile!(breakfast)
+	accounts.threshold = 2
 
 You can keep adding transactions as they happen. When you're ready to settle accounts, just call: 
 
-	payments = accounts.settle!
+	puts accounts.settle
 
-This will return a list of transactions to settle everyones open debts. 
 
 
 ## Contributing

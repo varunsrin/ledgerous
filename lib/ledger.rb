@@ -5,14 +5,17 @@ class Ledger
 
   attr_reader :accounts, :payments
 
+  attr_accessor :threshold
+
   def initialize
     @accounts = Hash.new(0)
+    @threshold = 0
   end
 
   # Returns true if there are no open accounts above or below the threshold
-  def empty?(threshold=0)
+  def empty?
     @accounts.each do |k, v| 
-      return false if v.abs > threshold
+      return false if v.abs > @threshold
     end
     return true
   end
